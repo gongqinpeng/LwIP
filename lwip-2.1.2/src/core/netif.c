@@ -307,7 +307,7 @@ netif_add(struct netif *netif,
   }
 
   /* reset new interface configuration state */
-  ip_addr_set_zero_ip4(&netif->ip_addr);
+  ip_addr_set_zero_ip4(&netif->ip_addr); //清空网卡的这些字段
   ip_addr_set_zero_ip4(&netif->netmask);
   ip_addr_set_zero_ip4(&netif->gw);
   netif->output = netif_null_output_ip4;
@@ -354,7 +354,7 @@ netif_add(struct netif *netif,
 #endif /* ENABLE_LOOPBACK */
 
   /* remember netif specific state information data */
-  netif->state = state;
+  netif->state = state; //设置网卡这些字段
   netif->num = netif_num;
   netif->input = input;
 
@@ -364,11 +364,11 @@ netif_add(struct netif *netif,
 #endif /* ENABLE_LOOPBACK && LWIP_LOOPBACK_MAX_PBUFS */
 
 #if LWIP_IPV4
-  netif_set_addr(netif, ipaddr, netmask, gw);
+  netif_set_addr(netif, ipaddr, netmask, gw); //设置网卡
 #endif /* LWIP_IPV4 */
 
   /* call user specified initialization function for netif */
-  if (init(netif) != ERR_OK) {
+  if (init(netif) != ERR_OK) {  //回调函数init初始化网卡
     return NULL;
   }
 #if LWIP_IPV6 && LWIP_ND6_ALLOW_RA_UPDATES
@@ -405,7 +405,7 @@ netif_add(struct netif *netif,
   if (netif->num == 254) {
     netif_num = 0;
   } else {
-    netif_num = (u8_t)(netif->num + 1);
+    netif_num = (u8_t)(netif->num + 1);  //遍历当前设备有多少网卡 并分配唯一表示num
   }
 
   /* add this netif to the list */
