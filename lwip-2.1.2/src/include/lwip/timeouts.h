@@ -67,7 +67,7 @@ typedef void (* lwip_cyclic_timer_handler)(void);
 
 /** This struct contains information about a stack-internal timer function
  that has to be called at a defined interval */
-struct lwip_cyclic_timer {
+struct lwip_cyclic_timer {    //内部使用的循环超时事件
   u32_t interval_ms;
   lwip_cyclic_timer_handler handler;
 #if LWIP_DEBUG_TIMERNAMES
@@ -90,17 +90,17 @@ extern const int lwip_num_cyclic_timers;
  */
 typedef void (* sys_timeout_handler)(void *arg);
 
-struct sys_timeo {
-  struct sys_timeo *next;
-  u32_t time;
-  sys_timeout_handler h;
-  void *arg;
+struct sys_timeo { //超时事件结构体
+  struct sys_timeo *next; //指向下一个超时事件
+  u32_t time; //当前超时事件的等待时间
+  sys_timeout_handler h; //指向超时的回调函数 事件超时后执行对应的超时函数
+  void *arg; //回调函数传入参数
 #if LWIP_DEBUG_TIMERNAMES
   const char* handler_name;
 #endif /* LWIP_DEBUG_TIMERNAMES */
 };
 
-void sys_timeouts_init(void);
+void sys_timeouts_init(void); //指向超时链表的第一个超时事件
 
 #if LWIP_DEBUG_TIMERNAMES
 void sys_timeout_debug(u32_t msecs, sys_timeout_handler handler, void *arg, const char* handler_name);

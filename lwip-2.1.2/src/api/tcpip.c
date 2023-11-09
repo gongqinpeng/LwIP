@@ -81,21 +81,21 @@ static void tcpip_thread_handle_msg(struct tcpip_msg *msg);
  * @param msg the place to store the message
  */
 static void
-tcpip_timeouts_mbox_fetch(sys_mbox_t *mbox, void **msg)
+tcpip_timeouts_mbox_fetch(sys_mbox_t *mbox, void **msg) //循环调用 等待tcpip_box消息
 {
   u32_t sleeptime, res;
 
 again:
   LWIP_ASSERT_CORE_LOCKED();
 
-  sleeptime = sys_timeouts_sleeptime();
-  if (sleeptime == SYS_TIMEOUTS_SLEEPTIME_INFINITE) {
+  sleeptime = sys_timeouts_sleeptime(); //得到距离事件超时的时间并保存
+  if (sleeptime == SYS_TIMEOUTS_SLEEPTIME_INFINITE) {//表示当前系统无超时事件
     UNLOCK_TCPIP_CORE();
-    sys_arch_mbox_fetch(mbox, msg, 0);
+    sys_arch_mbox_fetch(mbox, msg, 0);//一直等待box消息
     LOCK_TCPIP_CORE();
     return;
   } else if (sleeptime == 0) {
-    sys_check_timeouts();
+    sys_check_timeouts();//检查哪个事件超时并处理回调函数
     /* We try again to fetch a message from the mbox. */
     goto again;
   }

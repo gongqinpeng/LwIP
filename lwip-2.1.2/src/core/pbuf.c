@@ -729,7 +729,7 @@ pbuf_free(struct pbuf *p)
   u8_t count;
 
   if (p == NULL) {
-    LWIP_ASSERT("p != NULL", p != NULL);
+    LWIP_ASSERT("p != NULL", p != NULL); //空
     /* if assertions are disabled, proceed with debug output */
     LWIP_DEBUGF(PBUF_DEBUG | LWIP_DBG_LEVEL_SERIOUS,
                 ("pbuf_free(p == NULL) was called.\n"));
@@ -752,14 +752,14 @@ pbuf_free(struct pbuf *p)
     /* all pbufs in a chain are referenced at least once */
     LWIP_ASSERT("pbuf_free: p->ref > 0", p->ref > 0);
     /* decrease reference count (number of pointers to pbuf) */
-    ref = --(p->ref);
+    ref = --(p->ref); //引用次数减少
     SYS_ARCH_UNPROTECT(old_level);
     /* this pbuf is no longer referenced to? */
     if (ref == 0) {
       /* remember next pbuf in chain for next iteration */
-      q = p->next;
+      q = p->next;//记录下下一个buf
       LWIP_DEBUGF( PBUF_DEBUG | LWIP_DBG_TRACE, ("pbuf_free: deallocating %p\n", (void *)p));
-      alloc_src = pbuf_get_allocsrc(p);
+      alloc_src = pbuf_get_allocsrc(p); //获取当前buf类型
 #if LWIP_SUPPORT_CUSTOM_PBUF
       /* is this a custom pbuf? */
       if ((p->flags & PBUF_FLAG_IS_CUSTOM) != 0) {

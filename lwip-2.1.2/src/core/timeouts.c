@@ -74,7 +74,7 @@
 
 /** This array contains all stack-internal cyclic timers. To get the number of
  * timers, use LWIP_ARRAYSIZE() */
-const struct lwip_cyclic_timer lwip_cyclic_timers[] = {
+const struct lwip_cyclic_timer lwip_cyclic_timers[] = {  //存放了每个周期性的超时事件回调函数和超时时间
 #if LWIP_TCP
   /* The TCP timer is a special case: it does not have to run always and
      is triggered to start from TCP using tcp_timer_needed() */
@@ -202,14 +202,14 @@ sys_timeout_abs(u32_t abs_time, sys_timeout_handler handler, void *arg)
                              (void *)timeout, abs_time, handler_name, (void *)arg));
 #endif /* LWIP_DEBUG_TIMERNAMES */
 
-  if (next_timeout == NULL) {
+  if (next_timeout == NULL) { //链表空
     next_timeout = timeout;
     return;
   }
-  if (TIME_LESS_THAN(timeout->time, next_timeout->time)) {
+  if (TIME_LESS_THAN(timeout->time, next_timeout->time)) { //如果超时时间比头短  设置这个事件为头
     timeout->next = next_timeout;
     next_timeout = timeout;
-  } else {
+  } else { //遍历到合适的位置
     for (t = next_timeout; t != NULL; t = t->next) {
       if ((t->next == NULL) || TIME_LESS_THAN(timeout->time, t->next->time)) {
         timeout->next = t->next;
@@ -261,7 +261,7 @@ lwip_cyclic_timer(void *arg)
 }
 
 /** Initialize this module */
-void sys_timeouts_init(void)
+void sys_timeouts_init(void) //把timers数组循环超时事件插入超时链表
 {
   size_t i;
   /* tcp_tmr() at index 0 is started on demand */
@@ -296,10 +296,10 @@ sys_timeout(u32_t msecs, sys_timeout_handler handler, void *arg)
 
   LWIP_ASSERT("Timeout time too long, max is LWIP_UINT32_MAX/4 msecs", msecs <= (LWIP_UINT32_MAX / 4));
 
-  next_timeout_time = (u32_t)(sys_now() + msecs); /* overflow handled by TIME_LESS_THAN macro */ 
+  next_timeout_time = (u32_t)(sys_now() + msecs); /* overflow handled by TIME_LESS_THAN macro */  //根据当前时间计算超时时间
 
 #if LWIP_DEBUG_TIMERNAMES
-  sys_timeout_abs(next_timeout_time, handler, arg, handler_name);
+  sys_timeout_abs(next_timeout_time, handler, arg, handler_name);  //插入超时事件链表
 #else
   sys_timeout_abs(next_timeout_time, handler, arg);
 #endif
@@ -349,7 +349,7 @@ sys_untimeout(sys_timeout_handler handler, void *arg)
  * Must be called periodically from your main loop.
  */
 void
-sys_check_timeouts(void)
+sys_check_timeouts(void) //周期性调用函数 检查超时链表第一个结构体是否到期
 {
   u32_t now;
 
