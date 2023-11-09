@@ -230,7 +230,7 @@ pbuf_alloc(pbuf_layer layer, u16_t length, pbuf_type type)
   switch (type) {
     case PBUF_REF: /* fall through */
     case PBUF_ROM:
-      p = pbuf_alloc_reference(NULL, length, type);
+      p = pbuf_alloc_reference(NULL, length, type); //这种类型buf 只分配结构体空间大小
       break;
     case PBUF_POOL: {
       struct pbuf *q, *last;
@@ -240,19 +240,19 @@ pbuf_alloc(pbuf_layer layer, u16_t length, pbuf_type type)
       rem_len = length;
       do {
         u16_t qlen;
-        q = (struct pbuf *)memp_malloc(MEMP_PBUF_POOL);
-        if (q == NULL) {
+        q = (struct pbuf *)memp_malloc(MEMP_PBUF_POOL); //分配
+        if (q == NULL) { //分配失败
           PBUF_POOL_IS_EMPTY();
           /* free chain so far allocated */
-          if (p) {
+          if (p) { //如果之前分配成功 这次失败 将之前的都释放掉
             pbuf_free(p);
           }
           /* bail out unsuccessfully */
           return NULL;
         }
-        qlen = LWIP_MIN(rem_len, (u16_t)(PBUF_POOL_BUFSIZE_ALIGNED - LWIP_MEM_ALIGN_SIZE(offset)));
+        qlen = LWIP_MIN(rem_len, (u16_t)(PBUF_POOL_BUFSIZE_ALIGNED - LWIP_MEM_ALIGN_SIZE(offset))); //实际内存长度
         pbuf_init_alloced_pbuf(q, LWIP_MEM_ALIGN((void *)((u8_t *)q + SIZEOF_STRUCT_PBUF + offset)),
-                               rem_len, qlen, type, 0);
+                               rem_len, qlen, type, 0); //初始化结构体成员变量
         LWIP_ASSERT("pbuf_alloc: pbuf q->payload properly aligned",
                     ((mem_ptr_t)q->payload % MEM_ALIGNMENT) == 0);
         LWIP_ASSERT("PBUF_POOL_BUFSIZE must be bigger than MEM_ALIGNMENT",
@@ -262,17 +262,17 @@ pbuf_alloc(pbuf_layer layer, u16_t length, pbuf_type type)
           p = q;
         } else {
           /* make previous pbuf point to this pbuf */
-          last->next = q;
+          last->next = q; //buf连成链表
         }
         last = q;
-        rem_len = (u16_t)(rem_len - qlen);
+        rem_len = (u16_t)(rem_len - qlen); //计算存下所有数据长度
         offset = 0;
       } while (rem_len > 0);
       break;
     }
-    case PBUF_RAM: {
+    case PBUF_RAM: { //这种从内存堆申请buf
       u16_t payload_len = (u16_t)(LWIP_MEM_ALIGN_SIZE(offset) + LWIP_MEM_ALIGN_SIZE(length));
-      mem_size_t alloc_len = (mem_size_t)(LWIP_MEM_ALIGN_SIZE(SIZEOF_STRUCT_PBUF) + payload_len);
+      mem_size_t alloc_len = (mem_size_t)(LWIP_MEM_ALIGN_SIZE(SIZEOF_STRUCT_PBUF) + payload_len); //计算申请内存大小
 
       /* bug #50040: Check for integer overflow when calculating alloc_len */
       if ((payload_len < LWIP_MEM_ALIGN_SIZE(length)) ||
@@ -281,12 +281,12 @@ pbuf_alloc(pbuf_layer layer, u16_t length, pbuf_type type)
       }
 
       /* If pbuf is to be allocated in RAM, allocate memory for it. */
-      p = (struct pbuf *)mem_malloc(alloc_len);
+      p = (struct pbuf *)mem_malloc(alloc_len); //内存堆分配内存
       if (p == NULL) {
         return NULL;
       }
       pbuf_init_alloced_pbuf(p, LWIP_MEM_ALIGN((void *)((u8_t *)p + SIZEOF_STRUCT_PBUF + offset)),
-                             length, length, type, 0);
+                             length, length, type, 0); //初始化结构体成员变量
       LWIP_ASSERT("pbuf_alloc: pbuf->payload properly aligned",
                   ((mem_ptr_t)p->payload % MEM_ALIGNMENT) == 0);
       break;

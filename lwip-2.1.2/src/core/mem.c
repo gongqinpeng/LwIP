@@ -633,9 +633,9 @@ mem_free(void *rmem)
 
   /* Get the corresponding struct mem: */
   /* cast through void* to get rid of alignment warnings */
-  mem = (struct mem *)(void *)((u8_t *)rmem - (SIZEOF_STRUCT_MEM + MEM_SANITY_OFFSET));
+  mem = (struct mem *)(void *)((u8_t *)rmem - (SIZEOF_STRUCT_MEM + MEM_SANITY_OFFSET)); //对释放的地址进行偏移
 
-  if ((u8_t *)mem < ram || (u8_t *)rmem + MIN_SIZE_ALIGNED > (u8_t *)ram_end) {
+  if ((u8_t *)mem < ram || (u8_t *)rmem + MIN_SIZE_ALIGNED > (u8_t *)ram_end) { //判断地址是否合法
     LWIP_MEM_ILLEGAL_FREE("mem_free: illegal memory");
     LWIP_DEBUGF(MEM_DEBUG | LWIP_DBG_LEVEL_SEVERE, ("mem_free: illegal memory\n"));
     /* protect mem stats from concurrent access */
@@ -648,7 +648,7 @@ mem_free(void *rmem)
   /* protect the heap from concurrent access */
   LWIP_MEM_FREE_PROTECT();
   /* mem has to be in a used state */
-  if (!mem->used) {
+  if (!mem->used) { //如果未被使用
     LWIP_MEM_ILLEGAL_FREE("mem_free: illegal memory: double free");
     LWIP_MEM_FREE_UNPROTECT();
     LWIP_DEBUGF(MEM_DEBUG | LWIP_DBG_LEVEL_SEVERE, ("mem_free: illegal memory: double free?\n"));
@@ -657,7 +657,7 @@ mem_free(void *rmem)
     return;
   }
 
-  if (!mem_link_valid(mem)) {
+  if (!mem_link_valid(mem)) { //判断块在链表中连接是否正常
     LWIP_MEM_ILLEGAL_FREE("mem_free: illegal memory: non-linked: double free");
     LWIP_MEM_FREE_UNPROTECT();
     LWIP_DEBUGF(MEM_DEBUG | LWIP_DBG_LEVEL_SEVERE, ("mem_free: illegal memory: non-linked: double free?\n"));
@@ -845,7 +845,7 @@ mem_malloc(mem_size_t size_in)
      adjust for alignment. */
   size = (mem_size_t)LWIP_MEM_ALIGN_SIZE(size_in);
   if (size < MIN_SIZE_ALIGNED) {
-    /* every data block must be at least MIN_SIZE_ALIGNED long */
+    /* every data block must be at least MIN_SIZE_ALIGNED long */  //扩充为最小长度
     size = MIN_SIZE_ALIGNED;
   }
 #if MEM_OVERFLOW_CHECK
@@ -869,7 +869,7 @@ mem_malloc(mem_size_t size_in)
      */
     for (ptr = mem_to_ptr(lfree); ptr < MEM_SIZE_ALIGNED - size;
          ptr = ptr_to_mem(ptr)->next) {
-      mem = ptr_to_mem(ptr);
+      mem = ptr_to_mem(ptr);   //遍历堆 找到可用空间
 #if LWIP_ALLOW_MEM_FREE_FROM_OTHER_CONTEXT
       mem_free_count = 0;
       LWIP_MEM_ALLOC_UNPROTECT();
@@ -884,7 +884,7 @@ mem_malloc(mem_size_t size_in)
 #endif /* LWIP_ALLOW_MEM_FREE_FROM_OTHER_CONTEXT */
 
       if ((!mem->used) &&
-          (mem->next - (ptr + SIZEOF_STRUCT_MEM)) >= size) {
+          (mem->next - (ptr + SIZEOF_STRUCT_MEM)) >= size) { //内存块未使用 大小不小于用户使用的大小加上mem结构体的大小
         /* mem is not used and at least perfect fit is possible:
          * mem->next - (ptr + SIZEOF_STRUCT_MEM) gives us the 'user data size' of mem */
 
@@ -899,7 +899,7 @@ mem_malloc(mem_size_t size_in)
            *       region that couldn't hold data, but when mem->next gets freed,
            *       the 2 regions would be combined, resulting in more free memory
            */
-          ptr2 = (mem_size_t)(ptr + SIZEOF_STRUCT_MEM + size);
+          ptr2 = (mem_size_t)(ptr + SIZEOF_STRUCT_MEM + size); //较大的内存块 分成小块给用户使用 ptr2指针
           LWIP_ASSERT("invalid next ptr",ptr2 != MEM_SIZE_ALIGNED);
           /* create mem2 struct */
           mem2 = ptr_to_mem(ptr2);
@@ -912,7 +912,7 @@ mem_malloc(mem_size_t size_in)
 
           if (mem2->next != MEM_SIZE_ALIGNED) {
             ptr_to_mem(mem2->next)->prev = ptr2;
-          }
+          } //mem2下一个内存块不是链表中的最后一个块，将它的下一个块的prev指向ptr2
           MEM_STATS_INC_USED(used, (size + SIZEOF_STRUCT_MEM));
         } else {
           /* (a mem2 struct does no fit into the user data space of mem and mem->next will always
@@ -928,7 +928,7 @@ mem_malloc(mem_size_t size_in)
 #if LWIP_ALLOW_MEM_FREE_FROM_OTHER_CONTEXT
 mem_malloc_adjust_lfree:
 #endif /* LWIP_ALLOW_MEM_FREE_FROM_OTHER_CONTEXT */
-        if (mem == lfree) {
+        if (mem == lfree) { //如果被分出去的块是lfree
           struct mem *cur = lfree;
           /* Find next free block after mem and update lowest free pointer */
           while (cur->used && cur != ram_end) {
@@ -945,11 +945,11 @@ mem_malloc_adjust_lfree:
 #endif /* LWIP_ALLOW_MEM_FREE_FROM_OTHER_CONTEXT */
             cur = ptr_to_mem(cur->next);
           }
-          lfree = cur;
+          lfree = cur; //lfree指向
           LWIP_ASSERT("mem_malloc: !lfree->used", ((lfree == ram_end) || (!lfree->used)));
         }
         LWIP_MEM_ALLOC_UNPROTECT();
-        sys_mutex_unlock(&mem_mutex);
+        sys_mutex_unlock(&mem_mutex); //解锁
         LWIP_ASSERT("mem_malloc: allocated memory not above ram_end.",
                     (mem_ptr_t)mem + SIZEOF_STRUCT_MEM + size <= (mem_ptr_t)ram_end);
         LWIP_ASSERT("mem_malloc: allocated memory properly aligned.",
@@ -961,7 +961,7 @@ mem_malloc_adjust_lfree:
         mem_overflow_init_element(mem, size_in);
 #endif
         MEM_SANITY();
-        return (u8_t *)mem + SIZEOF_STRUCT_MEM + MEM_SANITY_OFFSET;
+        return (u8_t *)mem + SIZEOF_STRUCT_MEM + MEM_SANITY_OFFSET; //return
       }
     }
 #if LWIP_ALLOW_MEM_FREE_FROM_OTHER_CONTEXT
@@ -970,7 +970,7 @@ mem_malloc_adjust_lfree:
 #endif /* LWIP_ALLOW_MEM_FREE_FROM_OTHER_CONTEXT */
   MEM_STATS_INC(err);
   LWIP_MEM_ALLOC_UNPROTECT();
-  sys_mutex_unlock(&mem_mutex);
+  sys_mutex_unlock(&mem_mutex);//for 外面 如果分配不了 解锁
   LWIP_DEBUGF(MEM_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("mem_malloc: could not allocate %"S16_F" bytes\n", (s16_t)size));
   return NULL;
 }

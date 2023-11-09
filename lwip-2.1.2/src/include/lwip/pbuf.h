@@ -185,10 +185,10 @@ typedef enum {
 /** Main packet buffer struct */
 struct pbuf {
   /** next pbuf in singly linked pbuf chain */
-  struct pbuf *next;
+  struct pbuf *next; //指向下一个buf
 
   /** pointer to the actual data in the buffer */
-  void *payload;
+  void *payload;//该buf管理的数据区域的起始地址
 
   /**
    * total length of this buffer and all next buffers in chain
@@ -197,28 +197,28 @@ struct pbuf {
    * For non-queue packet chains this is the invariant:
    * p->tot_len == p->len + (p->next? p->next->tot_len: 0)
    */
-  u16_t tot_len;
+  u16_t tot_len;//当前buf和后续所有数据的长度
 
   /** length of this buffer */
-  u16_t len;
+  u16_t len; //当前buf中有效数据长度
 
   /** a bit field indicating pbuf type and allocation sources
       (see PBUF_TYPE_FLAG_*, PBUF_ALLOC_FLAG_* and PBUF_TYPE_ALLOC_SRC_MASK)
     */
-  u8_t type_internal;
+  u8_t type_internal; //类型
 
   /** misc flags */
-  u8_t flags;
+  u8_t flags; //
 
   /**
    * the reference count always equals the number of pointers
    * that refer to this pbuf. This can be pointers from an application,
    * the stack itself, or pbuf->next pointers from a chain.
    */
-  LWIP_PBUF_REF_T ref;
+  LWIP_PBUF_REF_T ref; //表示被引用的次数
 
   /** For incoming packets, this contains the input netif's index */
-  u8_t if_idx;
+  u8_t if_idx; //netif num 字段
 };
 
 
